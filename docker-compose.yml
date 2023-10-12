@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  web:
+    container_name: ${CONTAINER}
+    build: .
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+#    networks:
+#      - web
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+
+#networks:
+#  web:
+#    external:
+#      name: ${NETWORK}
