@@ -46,7 +46,7 @@ INSTALLED_APPS = [
 
     'leave_management',
     'bot_app',
-    'user_app',
+    'user',
 ]
 
 MIDDLEWARE = [
