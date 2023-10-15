@@ -6,6 +6,6 @@ router = routers.DefaultRouter()
 # router.register('', BotViewSet, basename='slack-bot')
 
 urlpatterns = [
-    path('user/', include(router.urls)),
+    path('leave/', include(router.urls)),
 ]
 
