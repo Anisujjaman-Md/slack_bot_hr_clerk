@@ -3,11 +3,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
-import datetime
-
 from config import settings
-
-x = datetime.datetime.now()
 
 
 class BotViewSet(viewsets.ViewSet):
@@ -25,7 +21,7 @@ class BotViewSet(viewsets.ViewSet):
         if event:
             channel_id = event.get("channel")
             user_id = event.get("user")
-            message = f"Hello, <@{user_id}>! I'm your Slack bot. Current Time is {x} :("
+            message = f"Hello, <@{user_id}>! I'm your Slack bot. Current Time is :("
 
             if bot != user_id:
                 try:
