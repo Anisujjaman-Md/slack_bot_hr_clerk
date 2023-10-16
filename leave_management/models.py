@@ -28,18 +28,19 @@ class LeaveApplication(models.Model):
         (REJECT, 'REJECT'),
     )
 
-    employee = models.CharField(max_length=30, null=True, blank=True)
-    leave_type = models.CharField(max_length=15, choices=LEAVE_TYPE_CHOICES)
-    duration_type = models.CharField(max_length=10, choices=DURATION_TYPE_CHOICES)
-    leave_status = models.CharField(max_length=7, choices=STATUS_CHOICES)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    employee_id = models.CharField(max_length=30, null=True, blank=True)
+    employee_name = models.CharField(max_length=30, null=True, blank=True)
+    leave_type = models.CharField(max_length=15, choices=LEAVE_TYPE_CHOICES, null=True, blank=True)
+    duration_type = models.CharField(max_length=10, choices=DURATION_TYPE_CHOICES, null=True, blank=True)
+    leave_status = models.CharField(max_length=7, choices=STATUS_CHOICES, null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
-    comment = models.TextField()
+    comment = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.employee}'s Leave Application"
+        return f"{self.employee_name}'s Leave Application"
 
 
 class RestrictedDays(models.Model):
