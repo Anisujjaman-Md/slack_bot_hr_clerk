@@ -5,9 +5,7 @@ from slack.errors import SlackApiError
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
 from config import settings
-
-from leave_management.models import LeaveApplication
-
+from leave_management.models import LeaveApplication, LeavePolicy
 
 slack_signing_secret = settings.SLACK_SIGNING_SECRET
 slack_events_adapter = SlackEventAdapter(slack_signing_secret, "/api/v1/slack-bot")
@@ -19,7 +17,35 @@ class LeaveApplicationService:
         pass
 
     def check_how_many_leave_taken(self, event, channel_id):
-        pass
+        user_id = event.get("user")
+        report_year = datetime.now().year
+        report_month = datetime.now().month
+
+        report_for_year = LeaveApplication.objects.filter(
+                leave_status=LeaveApplication.APPROVE,
+                start_date__year=report_year,
+                employee_id=user_id
+            )
+        report_for_month = LeaveApplication.objects.filter(
+                leave_status=LeaveApplication.APPROVE,
+                start_date__month=report_month,
+                employee_id=user_id
+            )
+        leave_policy = LeavePolicy.objects.latest('id')
+        paid_leave = leave_policy.paid_leave_per_year
+        max_leaves_per_month = leave_policy.max_leaves_per_month
+        a = len(report_for_year)
+        b = len(report_for_month)
+        if len(report_for_year) >= paid_leave:
+            client.chat_postMessage(channel=channel_id, text=f"Sorry! Your paid leave is already taken for this year "
+                                                             f":cry:")
+            return False
+        if len(report_for_month) >= max_leaves_per_month:
+            client.chat_postMessage(channel=channel_id, text=f"Sorry! Your paid leave is already taken for this month "
+                                                             f":cry:")
+            return False
+        return True
+
 
     def leave_form(self, event, channel_id):
         current_date = datetime.now().strftime("%Y-%m-%d")
@@ -173,9 +199,6 @@ class LeaveReportService:
             blocks = []
             for entry in report:
                 month = entry['start_date']
-                employee_id = entry['employee_id']
-                total = entry['total']
-
                 # Create a dynamic text block with values from the current entry
                 block = {
                     "type": "section",
@@ -191,7 +214,7 @@ class LeaveReportService:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f" Hey: <@{user_id}>, Report For: {month} {report_year} & Total Approved Leave : {len(report)}"
+                    "text": f" Hey: <@{user_id}>, Report For: *{month} {report_year}* & Total Approved Leave : {len(report)}"
                 }
             })
 
@@ -201,7 +224,7 @@ class LeaveReportService:
                 blocks=blocks
             )
         else:
-            message = "Invalid input format. Expected format: 'Report MM YYYY'"
+            message = "Invalid input format. Expected format: *'Report MM YYYY'*"
             try:
                 client.chat_postMessage(channel=channel_id, text=message)
                 response = {"message_sent": True}
