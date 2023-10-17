@@ -25,10 +25,9 @@ class BotViewSet(viewsets.ViewSet):
             user_id = event.get("user")
             if bot != user_id:
                 if text == "LEAVE":
-                    LeaveApplicationService().check_how_many_leave_taken(event, channel_id)
-
-                    LeaveApplicationService().leave_form(event, channel_id)
-
+                    eligible = LeaveApplicationService().check_how_many_leave_taken(event, channel_id)
+                    if eligible is True:
+                        LeaveApplicationService().leave_form(event, channel_id)
                 if text == "REPORT":
                     LeaveReportService().leave_report(event, channel_id)
 
