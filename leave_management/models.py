@@ -53,10 +53,11 @@ class LeaveApplication(models.Model):
             old_instance = LeaveApplication.objects.get(pk=self.pk)
             if self.leave_status == LeaveApplication.APPROVE:
                 client.chat_postMessage(channel=old_instance.channel_id,
-                                        text=f'Hey <@{old_instance.employee_id}>, Great! Your leave application is *{self.leave_status}* :smile:')
+                                        text=f'Hey <@{old_instance.employee_id}>, Great! Your leave application is '
+                                             f'*Approved* :smile:')
             if self.leave_status == LeaveApplication.DENY:
                 client.chat_postMessage(channel=old_instance.channel_id,
-                                        text=f'Hey <@{old_instance.employee_id}>, Sorry! Your leave application is *{self.leave_status}* :cry:')
+                                        text=f'Hey <@{old_instance.employee_id}>, Sorry! Your leave application is *Denied* :cry:')
         super(LeaveApplication, self).save(*args, **kwargs)
 
 
