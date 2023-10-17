@@ -1,13 +1,12 @@
 from django.urls import path, include
 from rest_framework import routers
-from bot_app import views
-from bot_app.views import BotViewSet
+from bot_app.views import BotViewSet, BotFormViewSet
 
 router = routers.DefaultRouter()
 router.register('', BotViewSet, basename='slack-bot')
+router.register('form', BotFormViewSet, basename='form')
 
 urlpatterns = [
     path('slack-bot/', include(router.urls)),
-    path('slack-interaction/', views.slack_interaction, name='slack-interaction'),
 ]
 

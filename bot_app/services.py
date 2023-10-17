@@ -1,10 +1,13 @@
 from datetime import datetime
-
+import calendar
+from django.db.models import Count
 from slack.errors import SlackApiError
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
-
 from config import settings
+
+from leave_management.models import LeaveApplication
+
 
 slack_signing_secret = settings.SLACK_SIGNING_SECRET
 slack_events_adapter = SlackEventAdapter(slack_signing_secret, "/api/v1/slack-bot")
@@ -18,8 +21,7 @@ class LeaveApplicationService:
     def check_how_many_leave_taken(self, event, channel_id):
         pass
 
-    def leave_message(self, event, channel_id):
-        user_id = event.get("user")
+    def leave_form(self, event, channel_id):
         current_date = datetime.now().strftime("%Y-%m-%d")
         leave_type_block = {
             "type": "section",
@@ -139,19 +141,70 @@ class LeaveApplicationService:
 
         response = client.chat_postMessage(channel=channel_id, blocks=blocks)
 
-    def form_data(self, payload):
-        action = payload["event"]["actions"][0]
+        return response
 
-        if action["action_id"] == "actionId-0":
-            user_response = action["value"]
-            response = client.chat_postMessage(
-                channel=payload["event"]["channel"],
-                text=f"Thanks for your response: {user_response}"
+
+class LeaveReportService:
+    def __init__(self):
+        pass
+
+    def leave_report(self, event, channel_id):
+        user_id = event.get("user")
+        text = event.get("text")
+        parts = text.split()
+
+        # Check if the input format is valid
+        if len(parts) == 3 and parts[0].lower() == "report":
+            report_month = int(parts[1])
+            report_year = int(parts[2])
+
+            report = LeaveApplication.objects.filter(
+                leave_status=LeaveApplication.APPROVE,
+                start_date__month=report_month,
+                start_date__year=report_year,
+                employee_id=user_id
+            ).values(
+                'start_date',
+                'employee_id'
+            ).annotate(
+                total=Count('start_date')
             )
 
-    def leave_report(self, event):
-        user_id = event.get("user")
-        text = event.get("text")[7:]
+            blocks = []
+            for entry in report:
+                month = entry['start_date']
+                employee_id = entry['employee_id']
+                total = entry['total']
 
-        message = f"Hello, <@{user_id}>!This is your report for {text}"
-        return message
+                # Create a dynamic text block with values from the current entry
+                block = {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"Date: {month}"
+                    }
+                }
+                blocks.append(block)
+
+            month = calendar.month_name[report_month]
+            blocks.insert(0, {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f" Hey: <@{user_id}>, Report For: {month} {report_year} & Total Approved Leave : {len(report)}"
+                }
+            })
+
+            # Create a list of blocks and send the message to a Slack channel
+            client.chat_postMessage(
+                channel=channel_id,
+                blocks=blocks
+            )
+        else:
+            message = "Invalid input format. Expected format: 'Report MM YYYY'"
+            try:
+                client.chat_postMessage(channel=channel_id, text=message)
+                response = {"message_sent": True}
+            except SlackApiError as e:
+                response = {"error": e.response["error"]}
+        return {"message_sent": True}
