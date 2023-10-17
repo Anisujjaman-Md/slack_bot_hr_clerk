@@ -5,8 +5,8 @@ from leave_management.models import LeaveApplication, LeavePolicy, RestrictedDay
 
 @admin.register(LeaveApplication)
 class LeaveApplicationAdmin(admin.ModelAdmin):
-    list_display = ('employee_id', 'employee_name', 'leave_type', 'start_date', 'end_date', 'duration_type')
-    list_filter = ('leave_type', 'duration_type')
+    list_display = ('employee_id', 'employee_name', 'leave_type', 'start_date', 'end_date', 'leave_status')
+    list_filter = ('leave_type', 'leave_status')
     search_fields = ('start_date', 'end_date')
 
 
