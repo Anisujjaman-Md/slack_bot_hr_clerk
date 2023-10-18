@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import calendar
 from django.db.models import Count
 from slack.errors import SlackApiError
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
 from config import settings
-from leave_management.models import LeaveApplication, LeavePolicy
+from leave_management.models import LeaveApplication, LeavePolicy, RestrictedDays
 
 slack_signing_secret = settings.SLACK_SIGNING_SECRET
 slack_events_adapter = SlackEventAdapter(slack_signing_secret, "/api/v1/slack-bot")
@@ -16,26 +16,24 @@ class LeaveApplicationService:
     def __init__(self):
         pass
 
-    def check_how_many_leave_taken(self, event, channel_id):
-        user_id = event.get("user")
+    def check_how_many_leave_taken(self, user_id, channel_id):
         report_year = datetime.now().year
         report_month = datetime.now().month
 
         report_for_year = LeaveApplication.objects.filter(
-                leave_status=LeaveApplication.APPROVE,
-                start_date__year=report_year,
-                employee_id=user_id
-            )
+            leave_status=LeaveApplication.APPROVE,
+            start_date__year=report_year,
+            employee_id=user_id
+        )
         report_for_month = LeaveApplication.objects.filter(
-                leave_status=LeaveApplication.APPROVE,
-                start_date__month=report_month,
-                employee_id=user_id
-            )
+            leave_status=LeaveApplication.APPROVE,
+            start_date__month=report_month,
+            employee_id=user_id
+        )
         leave_policy = LeavePolicy.objects.latest('id')
         paid_leave = leave_policy.paid_leave_per_year
         max_leaves_per_month = leave_policy.max_leaves_per_month
-        a = len(report_for_year)
-        b = len(report_for_month)
+
         if len(report_for_year) >= paid_leave:
             client.chat_postMessage(channel=channel_id, text=f"Sorry! Your paid leave is already taken for this year "
                                                              f":cry:")
@@ -45,7 +43,6 @@ class LeaveApplicationService:
                                                              f":cry:")
             return False
         return True
-
 
     def leave_form(self, event, channel_id):
         current_date = datetime.now().strftime("%Y-%m-%d")
@@ -169,6 +166,22 @@ class LeaveApplicationService:
 
         return response
 
+    def check_date_in_restricted_days(self, start_date_str, end_date_str, channel_id):
+        today = datetime.now().date()
+        restricted_dates = RestrictedDays.objects.filter(date__gte=today).values_list('date', flat=True)
+
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        date_list = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+
+        for date in date_list:
+            if date in restricted_dates:
+                client.chat_postMessage(channel=channel_id, text="Sorry! You cannot take this date is *restricted* for "
+                                                                 "leave :cry:")
+                return True
+
+        return False
 
 class LeaveReportService:
     def __init__(self):

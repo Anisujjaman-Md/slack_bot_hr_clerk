@@ -25,7 +25,7 @@ class BotViewSet(viewsets.ViewSet):
             user_id = event.get("user")
             if bot != user_id:
                 if text == "LEAVE":
-                    eligible = LeaveApplicationService().check_how_many_leave_taken(event, channel_id)
+                    eligible = LeaveApplicationService().check_how_many_leave_taken(user_id, channel_id)
                     if eligible is True:
                         LeaveApplicationService().leave_form(event, channel_id)
                 if text == "REPORT":
@@ -56,13 +56,17 @@ class BotFormViewSet(viewsets.ViewSet):
                 end_date = values["sectionBlockWithEndDate"]["end_date_action"]["selected_date"]
                 comment = values["sectionBlockWithComment"]["comment_input"]["value"]
 
-                LeaveApplication.objects.create(employee_id=employee_id, employee_name=employee_name,
-                                                leave_type=leave_type, start_date=start_date, end_date=end_date,
-                                                comment=comment, channel_id=channel_id)
-                if bot != employee_id:
-                    client.chat_postMessage(channel=channel_id, text=f'Hey <@{employee_id}>, Your leave application '
-                                                                     f'submitted. Please wait '
-                                                                     'for approval notification')
+                restriction = LeaveApplicationService().check_date_in_restricted_days(start_date, end_date, channel_id)
+                eligible = LeaveApplicationService().check_how_many_leave_taken(employee_id, channel_id)
+                if restriction is False and eligible is True:
+                    LeaveApplication.objects.create(employee_id=employee_id, employee_name=employee_name,
+                                                    leave_type=leave_type, start_date=start_date, end_date=end_date,
+                                                    comment=comment, channel_id=channel_id)
+                    if bot != employee_id:
+                        client.chat_postMessage(channel=channel_id,
+                                                text=f'Hey <@{employee_id}>, Your leave application '
+                                                     f'submitted. Please wait '
+                                                     'for approval notification')
             return Response({"message": "Data received and processed successfully."}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Payload is empty."}, status=status.HTTP_400_BAD_REQUEST)
