@@ -7,15 +7,6 @@ client = WebClient(token=settings.SLACK_TOKEN)
 
 
 class LeaveApplication(models.Model):
-    VACATION = 'VACATION'
-    SICK_LEAVE = 'SICK_LEAVE'
-    MATERNITY_LEAVE = 'MATERNITY_LEAVE'
-
-    LEAVE_TYPE_CHOICES = (
-        (VACATION, 'VACATION'),
-        (SICK_LEAVE, 'SICK_LEAVE'),
-        (MATERNITY_LEAVE, 'MATERNITY_LEAVE'),
-    )
 
     FULL_DAY = 'FULL_DAY'
     HALF_DAY = 'HALF_DAY'
@@ -36,7 +27,6 @@ class LeaveApplication(models.Model):
     employee_id = models.CharField(max_length=30, null=True, blank=True)
     employee_name = models.CharField(max_length=30, null=True, blank=True)
     channel_id = models.CharField(max_length=30, null=True, blank=True)
-    leave_type = models.CharField(max_length=15, choices=LEAVE_TYPE_CHOICES, null=True, blank=True)
     duration = models.PositiveIntegerField(default=0, null=True, blank=True)
     leave_status = models.CharField(max_length=7, choices=STATUS_CHOICES, null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
