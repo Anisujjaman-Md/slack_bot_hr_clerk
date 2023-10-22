@@ -1,5 +1,5 @@
 from django.db import models
-from user.models import AdminManagement
+from user.models import User
 from slack import WebClient
 from config import settings
 from datetime import datetime
@@ -36,7 +36,7 @@ class LeaveApplication(models.Model):
     end_date = models.DateField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
     Leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True, blank=True)
-    manager = models.ForeignKey(AdminManagement, on_delete=models.CASCADE, related_name='manager_leave_requests',
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, related_name='manager_leave_requests',
                                 null=True)
 
     def __str__(self):

@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import AdminManagement, BaseTimeModel
+from .models import User
 
 
-# Register the AdminManagement model
-@admin.register(AdminManagement)
-class AdminManagementAdmin(UserAdmin):
+# Register the User model
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
     list_display = ('email', 'role', 'manager')
     list_filter = ('role',)
     search_fields = ('email',)

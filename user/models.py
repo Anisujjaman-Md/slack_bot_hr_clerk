@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
 
-class AdminManagement(AbstractUser):
+class User(AbstractUser):
     ROLE_SUPER_ADMIN = "SUPER_ADMIN"
     ROLE_ADMIN = "ADMIN"
     ROLE_DEFAULT_MANAGER = "DEFAULT_MANAGER"
