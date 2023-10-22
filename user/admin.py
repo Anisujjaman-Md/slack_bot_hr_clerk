@@ -1,26 +1,22 @@
-from user.models import AdminManagement
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from .models import AdminManagement, BaseTimeModel
 
 
+# Register the AdminManagement model
 @admin.register(AdminManagement)
-class AdminManagementAdmin(admin.ModelAdmin):
-    list_display = ('email', 'phone_number', 'role')
+class AdminManagementAdmin(UserAdmin):
+    list_display = ('email', 'role', 'manager')
     list_filter = ('role',)
-    search_fields = ('email', 'phone_number')
-    ordering = ('email',)
+    search_fields = ('email',)
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal Info', {'fields': ('phone_number', 'role')}),
-        ('Important Dates', {'fields': ('last_login', 'date_joined')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'phone_number')}),
+        ('Permissions', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        ('Manager', {'fields': ('manager',)}),
+        ('Role', {'fields': ('role',)}),
     )
-
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2', 'phone_number', 'role')}
-         ),
-    )
-
-    filter_horizontal = ()
-    list_filter = ()

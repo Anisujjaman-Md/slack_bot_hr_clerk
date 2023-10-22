@@ -20,16 +20,17 @@ class AdminManagement(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=48, null=True, blank=True)
     role = models.CharField(max_length=15, choices=ROLE_CHOICES, default=ROLE_USER_MANAGER)
+    manager = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='subordinates')
     groups = models.ManyToManyField(
         Group,
-        related_name='admin_users',  # Specify a custom related_name
+        related_name='admin_users',
         blank=True,
         help_text="The groups this user belongs to.",
     )
 
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name='admin_users_permissions',  # Specify a custom related_name
+        related_name='admin_users_permissions',
         blank=True,
         help_text="Specific permissions for this user.",
     )
