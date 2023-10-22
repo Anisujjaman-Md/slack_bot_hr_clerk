@@ -1,4 +1,5 @@
 from django.db import models
+from user.models import AdminManagement
 from slack import WebClient
 from config import settings
 from datetime import datetime
@@ -6,34 +7,37 @@ from datetime import datetime
 client = WebClient(token=settings.SLACK_TOKEN)
 
 
+class LeaveType(models.Model):
+    leave_type_name = models.CharField(max_length=50)
+    days_allowed_in_a_year = models.PositiveIntegerField(default=0)
+    days_allowed_in_a_month = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.leave_type_name}"
+
+
 class LeaveApplication(models.Model):
-
-    FULL_DAY = 'FULL_DAY'
-    HALF_DAY = 'HALF_DAY'
-
-    DURATION_TYPE_CHOICES = (
-        (FULL_DAY, 'FULL_DAY'),
-        (HALF_DAY, 'HALF_DAY'),
-    )
-
+    PENDING = 'PENDING'
     APPROVE = 'APPROVE'
     DENY = 'DENY'
 
     STATUS_CHOICES = (
         (APPROVE, 'APPROVE'),
+        (PENDING, 'PENDING'),
         (DENY, 'DENY'),
     )
-
     employee_id = models.CharField(max_length=30, null=True, blank=True)
+    slack_channel = models.CharField(max_length=100, null=True, blank=True)
     employee_name = models.CharField(max_length=30, null=True, blank=True)
     channel_id = models.CharField(max_length=30, null=True, blank=True)
     duration = models.PositiveIntegerField(default=0, null=True, blank=True)
     leave_status = models.CharField(max_length=7, choices=STATUS_CHOICES, null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
-    start_time = models.TimeField(null=True, blank=True)
-    end_time = models.TimeField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
+    Leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True, blank=True)
+    manager = models.ForeignKey(AdminManagement, on_delete=models.CASCADE, related_name='manager_leave_requests',
+                                null=True)
 
     def __str__(self):
         return f"{self.employee_name}'s Leave Application"
@@ -73,12 +77,9 @@ class RestrictedDays(models.Model):
 
 
 class LeavePolicy(models.Model):
+    leave_taken = models.PositiveIntegerField(default=0)
+    restricted_days = models.ForeignKey(RestrictedDays, on_delete=models.SET_NULL, null=True, blank=True)
     paid_leave_per_year = models.PositiveIntegerField()
-    unpaid_leave_cost_per_day = models.DecimalField(max_digits=10, decimal_places=2)
-    paid_leave_taken = models.PositiveIntegerField(default=0)
-    unpaid_leave_taken = models.PositiveIntegerField(default=0)
-    leave_for_all_employees = models.BooleanField(default=False)
-    max_leaves_per_month = models.PositiveIntegerField()
 
     def __str__(self):
         return 'Leave Policy'
