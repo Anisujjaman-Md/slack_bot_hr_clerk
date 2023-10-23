@@ -15,6 +15,10 @@ class LeaveType(models.Model):
     def __str__(self):
         return f"{self.leave_type_name}"
 
+    def save(self, *args, **kwargs):
+        self.leave_type_name = self.leave_type_name.upper()
+        super(LeaveType, self).save(*args, **kwargs)
+
 
 class LeaveApplication(models.Model):
     PENDING = 'PENDING'

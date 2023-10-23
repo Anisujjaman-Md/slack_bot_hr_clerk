@@ -5,7 +5,7 @@ from slack.errors import SlackApiError
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
 from config import settings
-from leave_management.models import LeaveApplication, LeavePolicy, RestrictedDays
+from leave_management.models import LeaveApplication, LeavePolicy, RestrictedDays, LeaveType
 
 slack_signing_secret = settings.SLACK_SIGNING_SECRET
 slack_events_adapter = SlackEventAdapter(slack_signing_secret, "/api/v1/slack-bot")
@@ -16,36 +16,40 @@ class LeaveApplicationService:
     def __init__(self):
         pass
 
-    def check_how_many_leave_taken(self, user_id, channel_id):
+    def check_how_many_leave_taken(self, user_id, channel_id, leave_type):
         report_year = datetime.now().year
         report_month = datetime.now().month
 
         report_for_year = LeaveApplication.objects.filter(
             leave_status=LeaveApplication.APPROVE,
             start_date__year=report_year,
-            employee_id=user_id
+            employee_id=user_id,
+            Leave_type__leave_type_name=leave_type,
         )
         report_for_month = LeaveApplication.objects.filter(
             leave_status=LeaveApplication.APPROVE,
             start_date__month=report_month,
-            employee_id=user_id
+            employee_id=user_id,
+            Leave_type__leave_type_name=leave_type,
         )
-        leave_policy = LeavePolicy.objects.latest('id')
-        paid_leave = leave_policy.paid_leave_per_year
-        max_leaves_per_month = leave_policy.max_leaves_per_month
+        leave_type_query_set = LeaveType.objects.get(leave_type_name=leave_type)
+        max_leaves_per_year = leave_type_query_set.days_allowed_in_a_year
+        max_leaves_per_month = leave_type_query_set.days_allowed_in_a_month
 
-        if len(report_for_year) >= paid_leave:
-            client.chat_postMessage(channel=channel_id, text=f"Sorry! Your paid leave is already taken for this year "
-                                                             f":cry:")
-            return False
-        if len(report_for_month) >= max_leaves_per_month:
-            client.chat_postMessage(channel=channel_id, text=f"Sorry! Your paid leave is already taken for this month "
-                                                             f":cry:")
-            return False
+        if len(report_for_year) >= max_leaves_per_year:
+            client.chat_postMessage(channel=channel_id,
+                                    text=f"Warning! Your maximum {leave_type} leave is already taken for this year "
+                                         f":cry:")
+        else:
+            if len(report_for_month) >= max_leaves_per_month:
+                client.chat_postMessage(channel=channel_id,
+                                        text=f"Warning! Your maximum {leave_type} leave is already taken for this month "
+                                             f":cry:")
         return True
 
-    def leave_form(self, event, channel_id):
+    def leave_form(self, channel_id):
         current_date = datetime.now().strftime("%Y-%m-%d")
+        leave_types = LeaveType.objects.all()
         leave_type_block = {
             "type": "section",
             "block_id": "sectionBlockWithStaticSelect",
@@ -60,35 +64,22 @@ class LeaveApplicationService:
                     "text": "Select an item",
                     "emoji": True
                 },
-                "options": [
-                    {
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Vacation",
-                            "emoji": True
-                        },
-                        "value": "VACATION"
-                    },
-                    {
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Sick",
-                            "emoji": True
-                        },
-                        "value": "SICK_LEAVE"
-                    },
-                    {
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Maternity Leave",
-                            "emoji": True
-                        },
-                        "value": "MATERNITY_LEAVE"
-                    }
-                ],
                 "action_id": "leave_type_block_action"
             }
         }
+        options = [
+            {
+                "text": {
+                    "type": "plain_text",
+                    "text": leave_type.leave_type_name.capitalize(),
+                    "emoji": True
+                },
+                "value": leave_type.leave_type_name
+            }
+            for leave_type in leave_types
+        ]
+
+        leave_type_block["accessory"]["options"] = options
 
         start_date_block = {
             "type": "section",
@@ -182,6 +173,7 @@ class LeaveApplicationService:
                 return True
 
         return False
+
 
 class LeaveReportService:
     def __init__(self):
