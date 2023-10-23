@@ -59,7 +59,7 @@ class BotFormViewSet(viewsets.ViewSet):
                 if restriction is False:
                     leave_type_name = LeaveType.objects.get(leave_type_name=leave_type)
                     LeaveApplication.objects.create(employee_id=employee_id, employee_name=employee_name,
-                                                    Leave_type=leave_type_name, start_date=start_date, end_date=end_date,
+                                                    leave_type=leave_type_name, start_date=start_date, end_date=end_date,
                                                     comment=comment, channel_id=channel_id)
                     if bot != employee_id:
                         client.chat_postMessage(channel=channel_id,
