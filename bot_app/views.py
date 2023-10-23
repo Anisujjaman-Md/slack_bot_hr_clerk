@@ -5,7 +5,7 @@ from slack import WebClient
 from slackeventsapi import SlackEventAdapter
 from bot_app.services import LeaveApplicationService, LeaveReportService
 from config import settings
-from leave_management.models import LeaveApplication
+from leave_management.models import LeaveApplication, LeaveType
 
 
 class BotViewSet(viewsets.ViewSet):
@@ -25,9 +25,7 @@ class BotViewSet(viewsets.ViewSet):
             user_id = event.get("user")
             if bot != user_id:
                 if text == "LEAVE":
-                    eligible = LeaveApplicationService().check_how_many_leave_taken(user_id, channel_id)
-                    if eligible is True:
-                        LeaveApplicationService().leave_form(event, channel_id)
+                    LeaveApplicationService().leave_form(channel_id)
                 if text == "REPORT":
                     LeaveReportService().leave_report(event, channel_id)
 
@@ -57,10 +55,11 @@ class BotFormViewSet(viewsets.ViewSet):
                 comment = values["sectionBlockWithComment"]["comment_input"]["value"]
 
                 restriction = LeaveApplicationService().check_date_in_restricted_days(start_date, end_date, channel_id)
-                eligible = LeaveApplicationService().check_how_many_leave_taken(employee_id, channel_id)
-                if restriction is False and eligible is True:
+                LeaveApplicationService().check_how_many_leave_taken(employee_id, channel_id, leave_type)
+                if restriction is False:
+                    leave_type_name = LeaveType.objects.get(leave_type_name=leave_type)
                     LeaveApplication.objects.create(employee_id=employee_id, employee_name=employee_name,
-                                                    leave_type=leave_type, start_date=start_date, end_date=end_date,
+                                                    Leave_type=leave_type_name, start_date=start_date, end_date=end_date,
                                                     comment=comment, channel_id=channel_id)
                     if bot != employee_id:
                         client.chat_postMessage(channel=channel_id,
