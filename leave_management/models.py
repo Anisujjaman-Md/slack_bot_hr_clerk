@@ -16,6 +16,8 @@ class LeaveType(models.Model):
         return f"{self.leave_type_name}"
 
     def save(self, *args, **kwargs):
+        if self.days_allowed_in_a_month == 0:
+            self.days_allowed_in_a_month = self.days_allowed_in_a_year
         self.leave_type_name = self.leave_type_name.upper()
         super(LeaveType, self).save(*args, **kwargs)
 
@@ -39,7 +41,7 @@ class LeaveApplication(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
-    Leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True, blank=True)
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True, blank=True)
     manager = models.ForeignKey(User, on_delete=models.CASCADE, related_name='manager_leave_requests',
                                 null=True)
 

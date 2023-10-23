@@ -11,8 +11,8 @@ class LeaveTypeAdmin(admin.ModelAdmin):
 # Register the LeaveApplication model
 @admin.register(LeaveApplication)
 class LeaveApplicationAdmin(admin.ModelAdmin):
-    list_display = ('employee_name', 'leave_status', 'start_date', 'end_date', 'Leave_type', 'manager')
-    list_filter = ('leave_status', 'Leave_type', 'manager')
+    list_display = ('employee_name', 'leave_status', 'start_date', 'end_date', 'leave_type', 'manager')
+    list_filter = ('leave_status', 'leave_type', 'manager')
     search_fields = ('employee_name', 'employee_id')
 
 

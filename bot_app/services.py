@@ -24,13 +24,13 @@ class LeaveApplicationService:
             leave_status=LeaveApplication.APPROVE,
             start_date__year=report_year,
             employee_id=user_id,
-            Leave_type__leave_type_name=leave_type,
+            leave_type__leave_type_name=leave_type,
         )
         report_for_month = LeaveApplication.objects.filter(
             leave_status=LeaveApplication.APPROVE,
             start_date__month=report_month,
             employee_id=user_id,
-            Leave_type__leave_type_name=leave_type,
+            leave_type__leave_type_name=leave_type,
         )
         leave_type_query_set = LeaveType.objects.get(leave_type_name=leave_type)
         max_leaves_per_year = leave_type_query_set.days_allowed_in_a_year
@@ -38,12 +38,13 @@ class LeaveApplicationService:
 
         if len(report_for_year) >= max_leaves_per_year:
             client.chat_postMessage(channel=channel_id,
-                                    text=f"Warning! Your maximum {leave_type} leave is already taken for this year "
+                                    text=f"*Warning!* Your maximum {leave_type} leave is already taken for this year "
                                          f":cry:")
         else:
             if len(report_for_month) >= max_leaves_per_month:
                 client.chat_postMessage(channel=channel_id,
-                                        text=f"Warning! Your maximum {leave_type} leave is already taken for this month "
+                                        text=f"*Warning!* Your maximum {leave_type} leave is already taken for this "
+                                             f"month"
                                              f":cry:")
         return True
 
