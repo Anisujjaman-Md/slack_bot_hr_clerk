@@ -60,7 +60,7 @@ class LeaveApplication(models.Model):
     def save(self, *args, **kwargs):
         # Check if the status has changed
         self.calculate_duration()
-        if self.pk:  # Check if the instance is already in the database (updating)
+        if self.pk:
             old_instance = LeaveApplication.objects.get(pk=self.pk)
             if self.leave_status == LeaveApplication.APPROVE:
                 client.chat_postMessage(channel=old_instance.channel_id,
