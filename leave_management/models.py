@@ -5,7 +5,10 @@ from config import settings
 from datetime import datetime
 
 client = WebClient(token=settings.SLACK_TOKEN)
-
+# team_data = client.auth_test()
+# users_list_data = client.users_list()
+# conversations = client.conversations_list()
+# print(conversations)
 
 class LeaveType(models.Model):
     leave_type_name = models.CharField(max_length=50)
@@ -44,6 +47,9 @@ class LeaveApplication(models.Model):
     leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True, blank=True)
     manager = models.ForeignKey(User, on_delete=models.CASCADE, related_name='manager_leave_requests',
                                 null=True)
+
+    class Meta:
+        ordering = ['-id']
 
     def __str__(self):
         return f"{self.employee_name}'s Leave Application"
